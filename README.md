@@ -12,7 +12,7 @@ JS segmentation library for split tests
 - `segmentator.min.js` is a minified ES5 version for easy use
 
 ### Parameters
-####Method
+#### Method
 ```javascript
 /**
  * Get segment
@@ -23,7 +23,7 @@ JS segmentation library for split tests
 segmab({params}, callback);
 ```
 
-####Params
+#### Params
 
 ##### Number of segments
 - `segments_number`, integer (from 2 to 26)
