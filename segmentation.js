@@ -9,7 +9,7 @@
 
         GetAlphabet(count) {
             let start = 9;
-            return Array.apply(null, Array(count)).map(x => (++start).toString(36).toUpperCase());
+            return [...Array(count)].map(x => (++start).toString(36).toUpperCase());
         },
     
         GetMainDomain() {
