@@ -55,12 +55,12 @@
                 throw "The \"prefix\" parameter shouldn't be an empty string";
             }
 
-            if (typeof this["segments_number"] != "number" || this["segments_number"] < 2 || this["segments_number"] > 26) {
-                throw "The \"segments_number\" parameter should be a number between 2 and 26";
+            if (typeof this["segments_number"] != "number" || this["segments_number"] < 2 || this["segments_number"] > 26 || !Number.isInteger(this["segments_number"])) {
+                throw "The \"segments_number\" parameter should be an integer number between 2 and 26";
             }
 
-            if (typeof this["days"] != "number" || this["days"] < 0) {
-                throw "The \"days\" parameter should be a number greater than or equal to zero";
+            if (typeof this["days"] != "number" || this["days"] < 0 || !Number.isInteger(this["days"])) {
+                throw "The \"days\" parameter should be an integer number greater than or equal to zero";
             }
 
             let segment = this.ReadCookie(this.GetSegmentCookieName());
