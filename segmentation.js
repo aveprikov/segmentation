@@ -26,10 +26,10 @@
             if (days) {
                 const date = new Date();
                 date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "expires=" + date.toGMTString();
+                expires = `expires=${date.toGMTString()}`;
             }
 
-            const domain = "domain=." + this.GetMainDomain();
+            const domain = `domain=.${this.GetMainDomain()}`;
             document.cookie = `${encodeURI(name)}=${encodeURI(value)}; ${expires}; ${domain}; path=/`;
         },
 
