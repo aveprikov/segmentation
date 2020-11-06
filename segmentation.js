@@ -81,5 +81,3 @@
         return core.GetSegment(command[1]);
     })([queue]);
 })();
-
-//segmab({segments_number: 3, prefix: "custom", days: 0}, (segment) => console.log(segment));
