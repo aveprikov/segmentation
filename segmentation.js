@@ -1,3 +1,11 @@
+/**
+ * SegmAB, segmenting website visitors
+ * Copyright (c) 2020-present, Andrey Veprikov
+ *
+ * This source code is licensed under the MIT license available here - 
+ * https://raw.githubusercontent.com/aveprikov/segmentation/main/LICENSE
+ */
+
 "use strict";
 (() => {
     window["segmab"] = window["segmab"] || function() {window["segmab"].queue = window["segmab"].queue || [...arguments]};
