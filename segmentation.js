@@ -8,28 +8,39 @@
 
 "use strict";
 (() => {
-    window["segmab"] = window["segmab"] || function() {window["segmab"].queue = window["segmab"].queue || [...arguments]};
+    window["segmab"] = window["segmab"] || function () { window["segmab"].queue = window["segmab"].queue || [...arguments] };
 
-    let core = {
-        GetSegmentCookieName() {
+    if (!Array.prototype.flat) {
+        Array.prototype.flat = function () {
+            let deep = arguments.length == 0 ? 0 : arguments[0];
+            return deep > 0
+                ?
+                this.reduce((arr, item) => arr.concat(Array.isArray(item) ? item.flat(deep - 1) : item), [])
+                :
+                this.slice();
+        }
+    }
+
+    let Core = {
+        getSegmentCookieName() {
             return `${this["prefix"]}VisitorSegment`;
         },
 
-        GetAlphabet(count) {
+        getAlphabet(count) {
             let start = 9;
             return [...Array(count)].map(x => (++start).toString(36).toUpperCase());
         },
-    
-        GetMainDomain() {
+
+        getMainDomain() {
             const host = document.location.hostname;
             const hostParts = host.split('.');
-            if (hostParts.length > 1) 
+            if (hostParts.length > 1)
                 return hostParts.slice(-2).join('.');
             else
                 return host;
         },
 
-        CreateCookie(name, value, days) {
+        createCookie(name, value, days) {
             let expires = '';
             if (days) {
                 const date = new Date();
@@ -37,11 +48,11 @@
                 expires = `expires=${date.toGMTString()}`;
             }
 
-            const domain = `domain=.${this.GetMainDomain()}`;
+            const domain = `domain=.${this.getMainDomain()}`;
             document.cookie = `${encodeURI(name)}=${encodeURI(value)}; ${expires}; ${domain}; path=/`;
         },
 
-        ReadCookie(name) {
+        readCookie(name) {
             const nameEQ = encodeURI(name) + "=";
             const ca = document.cookie.split(';');
             for (let i = 0; i < ca.length; i++) {
@@ -51,14 +62,14 @@
             return null;
         },
 
-        CreateSegment(segmentsCount) {
+        createSegment(segmentsCount) {
             const date = new Date();
-            const segment = this.GetAlphabet(segmentsCount)[parseInt(date.getMilliseconds().toString(segmentsCount).slice(-1), segmentsCount)];
-            this.CreateCookie(this.GetSegmentCookieName(), segment, this["days"]);
+            const segment = this.getAlphabet(segmentsCount)[parseInt(date.getMilliseconds().toString(segmentsCount).slice(-1), segmentsCount)];
+            this.createCookie(this.getSegmentCookieName(), segment, this["days"]);
             return segment;
         },
 
-        GetSegment(callback) {
+        getSegment(callback) {
             if (typeof this["prefix"] != "string" || this["prefix"].length == 0) {
                 throw "The \"prefix\" parameter shouldn't be an empty string";
             }
@@ -71,21 +82,21 @@
                 throw "The \"days\" parameter should be an integer number greater than or equal to zero";
             }
 
-            let segment = this.ReadCookie(this.GetSegmentCookieName());
-            if (!segment || !(this.GetAlphabet(this["segments_number"]).indexOf(segment) + 1)) {
-                segment = this.CreateSegment(this["segments_number"]);
+            let segment = this.readCookie(this.getSegmentCookieName());
+            if (!segment || !(this.getAlphabet(this["segments_number"]).indexOf(segment) + 1)) {
+                segment = this.createSegment(this["segments_number"]);
             }
             if (typeof callback == "function") callback(segment);
 
             return segment;
         }
     };
-    const queue = window["segmab"].queue;
 
-    (window["segmab"] = function(command) {
+    const queue = window["segmab"].queue;
+    (window["segmab"] = function (command) {
         command = [...arguments].flat(Infinity);
         if (typeof command == "undefined" || typeof command[0] == "undefined") return;
-        core = {...core, ...command[0]};
-        return core.GetSegment(command[1]);
+        Core = { ...Core, ...command[0] };
+        return Core.getSegment(command[1]);
     })([queue]);
 })();
