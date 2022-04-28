@@ -31,15 +31,6 @@
             return [...Array(count)].map(x => (++start).toString(36).toUpperCase());
         },
 
-        getMainDomain() {
-            const host = document.location.hostname;
-            const hostParts = host.split('.');
-            if (hostParts.length > 1)
-                return hostParts.slice(-2).join('.');
-            else
-                return host;
-        },
-
         createCookie(name, value, days) {
             let expires = '';
             if (days) {
@@ -48,8 +39,7 @@
                 expires = `expires=${date.toGMTString()}`;
             }
 
-            const domain = `domain=.${this.getMainDomain()}`;
-            document.cookie = `${encodeURI(name)}=${encodeURI(value)}; ${expires}; ${domain}; path=/`;
+            document.cookie = `${encodeURI(name)}=${encodeURI(value)}; ${expires}; domain=; path=/`;
         },
 
         readCookie(name) {
