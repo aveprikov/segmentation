@@ -68,7 +68,7 @@ switch(segment) {
 ```
 Using callback function. For example, to send a segment to Google Analytics:
 ```javascript
-segmab({segments_number: 3, prefix: "myprefix", days: 0}, segment => {
+segmab({segments_number: 3, prefix: "myprefix", days: 365}, segment => {
     ga("set", "dimension1", segment);
 });
 ```
