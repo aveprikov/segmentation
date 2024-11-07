@@ -9,7 +9,7 @@ JS segmentation library for split tests
 
 ### Files
 - `segmentator.js` is a complete ES6 version, easy to modify according to your needs
-- `segmentator.min.js` is a minified ES5 version for easy use
+- `segmentator.min.js` is a minified version for easy use
 
 ### Parameters
 #### Method
@@ -32,7 +32,7 @@ segmab({params}, callback);
 - `prefix`, string
 
 ##### Cookie's lifetime (days)
-- `days`, integer (if zero, the segment will be assigned for the duration of the browser session)
+- `days`, non-zero integer
 
 ### Usage
 

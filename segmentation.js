@@ -22,40 +22,41 @@
     }
 
     let Core = {
-        getSegmentCookieName() {
+        getSegmentLocalStorageName() {
             return `${this["prefix"]}VisitorSegment`;
         },
 
         getAlphabet(count) {
             let start = 9;
-            return [...Array(count)].map(x => (++start).toString(36).toUpperCase());
+            return [...Array(count)].map(_ => (++start).toString(36).toUpperCase());
         },
 
-        createCookie(name, value, days) {
-            let expires = '';
-            if (days) {
-                const date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = `expires=${date.toGMTString()}`;
-            }
-
-            document.cookie = `${encodeURI(name)}=${encodeURI(value)}; ${expires}; domain=; path=/`;
+        setLocalStorageValue(name, value, days) {
+            window.localStorage.setItem(name, value);
+            const timeStamp = (new Date()).getTime() + (days * 24 * 60 * 60 * 1000);
+            window.localStorage.setItem(`${name}_expiration`, timeStamp.toString());
         },
 
-        readCookie(name) {
-            const nameEQ = encodeURI(name) + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i].trim();
-                if (c.indexOf(nameEQ) === 0) return decodeURI(c.substring(nameEQ.length, c.length)).toUpperCase();
+        getLocalStorageValue(name) {
+            let value = null;
+            if ((new Date()).getTime() < window.localStorage.getItem(`${name}_expiration`)) {
+                value = window.localStorage.getItem(name);
+            } else {
+                this.removeLocalStorageValue(name);
+                this.removeLocalStorageValue(`${name}_expiration`);
             }
-            return null;
+
+            return value;
+        },
+
+        removeLocalStorageValue(name) {
+            window.localStorage.removeItem(name);
         },
 
         createSegment(segmentsCount) {
             const date = new Date();
             const segment = this.getAlphabet(segmentsCount)[parseInt(date.getMilliseconds().toString(segmentsCount).slice(-1), segmentsCount)];
-            this.createCookie(this.getSegmentCookieName(), segment, this["days"]);
+            this.setLocalStorageValue(this.getSegmentLocalStorageName(), segment, this["days"]);
             return segment;
         },
 
@@ -68,11 +69,11 @@
                 throw "The \"segments_number\" parameter should be an integer number between 2 and 26";
             }
 
-            if (typeof this["days"] != "number" || this["days"] < 0 || !Number.isInteger(this["days"])) {
-                throw "The \"days\" parameter should be an integer number greater than or equal to zero";
+            if (typeof this["days"] != "number" || this["days"] <= 0 || !Number.isInteger(this["days"])) {
+                throw "The \"days\" parameter should be an integer number greater than zero";
             }
 
-            let segment = this.readCookie(this.getSegmentCookieName());
+            let segment = this.getLocalStorageValue(this.getSegmentLocalStorageName());
             if (!segment || !(this.getAlphabet(this["segments_number"]).indexOf(segment) + 1)) {
                 segment = this.createSegment(this["segments_number"]);
             }
