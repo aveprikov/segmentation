@@ -51,7 +51,7 @@ For example, three segments with the prefix "myprefix" were defined. And the seg
 ```
 Getting the segment value into an external variable:
 ```javascript
-const segment = segmab({segments_number: 3, prefix: "myprefix", days: 0});
+const segment = segmab({segments_number: 3, prefix: "myprefix", days: 1});
 switch(segment) {
     case 'A':
         // something for the segment "A" visitors

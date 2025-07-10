@@ -7,87 +7,135 @@
  */
 
 "use strict";
-(() => {
-    window["segmab"] = window["segmab"] || function () { window["segmab"].queue = window["segmab"].queue || [...arguments] };
 
-    if (!Array.prototype.flat) {
-        Array.prototype.flat = function () {
-            let deep = arguments.length == 0 ? 0 : arguments[0];
-            return deep > 0
-                ?
-                this.reduce((arr, item) => arr.concat(Array.isArray(item) ? item.flat(deep - 1) : item), [])
-                :
-                this.slice();
+(() => {
+    /**
+     * Visitor segmentation handler using localStorage.
+     */
+    class Segmentation {
+        /**
+         * @param {object} config - Configuration object
+         * @param {string} config.prefix - Storage key prefix
+         * @param {number} config.segments_number - Number of audience segments (2–26)
+         * @param {number} config.days - Number of days the segment persists
+         * @throws {TypeError|Error} If parameters are missing or invalid
+         */
+        constructor(config) {
+            if (!config || typeof config !== "object" || Array.isArray(config)) {
+                throw new TypeError("Invalid config: expected a non-array object");
+            }
+
+            const { prefix, segments_number, days } = config;
+
+            if (typeof prefix !== "string" || !prefix.length)
+                throw new Error('"prefix" must be a non-empty string');
+            if (!Number.isInteger(segments_number) || segments_number < 2 || segments_number > 26)
+                throw new Error('"segments_number" must be an integer between 2 and 26');
+            if (!Number.isInteger(days) || days <= 0)
+                throw new Error('"days" must be a positive integer');
+
+            /** @private */
+            this.prefix = prefix;
+            /** @private */
+            this.segmentsNumber = segments_number;
+            /** @private */
+            this.days = days;
+        }
+
+        /**
+         * Gets the localStorage key used to store the segment.
+         * @returns {string}
+         */
+        get storageKey() {
+            return `${this.prefix}VisitorSegment`;
+        }
+
+        /**
+         * Generates an array of segment identifiers (A–Z).
+         * @returns {string[]}
+         */
+        getAlphabet() {
+            return Array.from({ length: this.segmentsNumber }, (_, i) =>
+                (10 + i).toString(36).toUpperCase()
+            );
+        }
+
+        /**
+         * Stores the segment value in localStorage with expiration.
+         * @param {string} value - Segment identifier
+         */
+        setLocalStorage(value) {
+            localStorage.setItem(this.storageKey, value);
+            localStorage.setItem(
+                `${this.storageKey}_expiration`,
+                (Date.now() + this.days * 864e5).toString()
+            );
+        }
+
+        /**
+         * Retrieves the stored segment if not expired.
+         * @returns {string|null}
+         */
+        getLocalStorage() {
+            const exp = parseInt(localStorage.getItem(`${this.storageKey}_expiration`), 10);
+            if (Date.now() < exp) {
+                return localStorage.getItem(this.storageKey);
+            } else {
+                this.removeLocalStorage();
+                return null;
+            }
+        }
+
+        /**
+         * Removes the segment and its expiration from localStorage.
+         */
+        removeLocalStorage() {
+            localStorage.removeItem(this.storageKey);
+            localStorage.removeItem(`${this.storageKey}_expiration`);
+        }
+
+        /**
+         * Creates a new segment identifier and stores it.
+         * @returns {string} The created segment ID
+         */
+        createSegment() {
+            const msDigit = new Date().getMilliseconds().toString(this.segmentsNumber).slice(-1);
+            const alphabet = this.getAlphabet();
+            const segment = alphabet[parseInt(msDigit, this.segmentsNumber)];
+            this.setLocalStorage(segment);
+            return segment;
+        }
+
+        /**
+         * Gets or creates a segment, and calls back if provided.
+         * @param {function(string):void} [callback] - Optional callback with segment
+         * @returns {string} Segment ID
+         */
+        getSegment(callback) {
+            let segment = this.getLocalStorage();
+            const alphabet = this.getAlphabet();
+            if (!segment || !alphabet.includes(segment)) {
+                segment = this.createSegment();
+            }
+            if (typeof callback === "function") callback(segment);
+            return segment;
         }
     }
 
-    let Core = {
-        getSegmentLocalStorageName() {
-            return `${this["prefix"]}VisitorSegment`;
-        },
-
-        getAlphabet(count) {
-            let start = 9;
-            return [...Array(count)].map(_ => (++start).toString(36).toUpperCase());
-        },
-
-        setLocalStorageValue(name, value, days) {
-            window.localStorage.setItem(name, value);
-            const timeStamp = (new Date()).getTime() + (days * 24 * 60 * 60 * 1000);
-            window.localStorage.setItem(`${name}_expiration`, timeStamp.toString());
-        },
-
-        getLocalStorageValue(name) {
-            let value = null;
-            if ((new Date()).getTime() < window.localStorage.getItem(`${name}_expiration`)) {
-                value = window.localStorage.getItem(name);
-            } else {
-                this.removeLocalStorageValue(name);
-                this.removeLocalStorageValue(`${name}_expiration`);
-            }
-
-            return value;
-        },
-
-        removeLocalStorageValue(name) {
-            window.localStorage.removeItem(name);
-        },
-
-        createSegment(segmentsCount) {
-            const date = new Date();
-            const segment = this.getAlphabet(segmentsCount)[parseInt(date.getMilliseconds().toString(segmentsCount).slice(-1), segmentsCount)];
-            this.setLocalStorageValue(this.getSegmentLocalStorageName(), segment, this["days"]);
-            return segment;
-        },
-
-        getSegment(callback) {
-            if (typeof this["prefix"] != "string" || this["prefix"].length == 0) {
-                throw "The \"prefix\" parameter shouldn't be an empty string";
-            }
-
-            if (typeof this["segments_number"] != "number" || this["segments_number"] < 2 || this["segments_number"] > 26 || !Number.isInteger(this["segments_number"])) {
-                throw "The \"segments_number\" parameter should be an integer number between 2 and 26";
-            }
-
-            if (typeof this["days"] != "number" || this["days"] <= 0 || !Number.isInteger(this["days"])) {
-                throw "The \"days\" parameter should be an integer number greater than zero";
-            }
-
-            let segment = this.getLocalStorageValue(this.getSegmentLocalStorageName());
-            if (!segment || !(this.getAlphabet(this["segments_number"]).indexOf(segment) + 1)) {
-                segment = this.createSegment(this["segments_number"]);
-            }
-            if (typeof callback == "function") callback(segment);
-
-            return segment;
-        }
+    /**
+     * Global entry point for segmentation.
+     * Compatible with usage:
+     * segmab({ prefix, segments_number, days }, callback)
+     *
+     * @param {object} config - Configuration object
+     * @param {function(string):void} [callback] - Optional callback
+     * @returns {string} Segment
+     */
+    const segmab = (...args) => {
+        const [config, callback] = args;
+        const instance = new Segmentation(config);
+        return instance.getSegment(callback);
     };
 
-    const queue = window["segmab"].queue;
-    (window["segmab"] = function (command) {
-        command = [...arguments].flat(Infinity);
-        if (typeof command == "undefined" || typeof command[0] == "undefined") return;
-        Core = { ...Core, ...command[0] };
-        return Core.getSegment(command[1]);
-    })([queue]);
+    window.segmab = segmab;
 })();
